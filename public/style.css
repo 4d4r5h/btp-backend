@@ -1,0 +1,91 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,
+body,
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+#buttons {
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
+  z-index: 500;
+  margin: 10px;
+}
+
+#speak_button,
+#recenter_button,
+#add_label_button {
+  height: 40px;
+  width: 40px;
+  border-radius: 10px;
+}
+
+#recenter_button:hover,
+#speak_button:hover,
+#add_label_button:hover {
+  background-color: grey;
+}
+
+#container {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  margin: 10px;
+  z-index: 600;
+}
+
+.input-container,
+.output-container {
+  top: 0px;
+  right: 0px;
+  margin: 10px;
+}
+
+.output-text-box {
+  display: block;
+  margin-bottom: 5px;
+  padding: 5px;
+  padding-right: 1rem;
+  width: 200px;
+  background-color: white;
+  visibility: hidden;
+  overflow-y: scroll;
+  height: 400px;
+}
+
+.text-input {
+  display: block;
+  margin-bottom: 5px;
+  padding: 5px;
+  padding-right: 1rem;
+  width: 200px;
+}
+
+.clear-button {
+  position: absolute;
+  /* top: 5px; */
+  top: 50%;
+  transform: translateY(-60%);
+  right: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  font-family: "Roboto";
+  color: grey;
+  visibility: hidden;
+}
+
+.form {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.text-input:hover + .clear-button,
+.clear-button:hover {
+  visibility: visible;
+}
