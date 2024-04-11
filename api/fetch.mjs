@@ -7,10 +7,19 @@ const tokens = [
   "PJYbeGLfUeXRUroXELNWYnNYCbm5rnXJ",
   "hBk7N1sgQ6oVAdACcDITkV22enZCsdWy",
   "ClYZh1pP6EknjeGtXqOafGnA4I5MGkan",
-  "YY7JdsJXQh2xOQbu7WkxBEUoojZi0ZQA"
+  "YY7JdsJXQh2xOQbu7WkxBEUoojZi0ZQA",
+  "M5HNXGRcVM04mjQVuwmlNWWsTS0V4BLM",
+  "mLMFHhbGIqlfyoIGtvmZcG7UeMa2mair",
+  "SxqXuvaY9VWN6GupAWAahooLqTl8ohA2",
+  "G5c2JgJktCipaANFth3JTVYc3bPoKSEX",
+  "yO4ACcpiV0KSjsBiMWoZXF5UGBHcJwxk",
+  "x3eEC5jGIc6YacX91bGpcA72xVquZX7V",
+  "KtCoevkTV3HhwPARccC7v5AVQtOIQAyc",
+  "bOnv6OAzFU4hnChRl6oFlAJVVSfaGg5A",
+  "DlAiWnq2AbXQZ1jvOohJbj4kHD1tFzee",
 ];
 
-const tomtomAccessToken = "YY7JdsJXQh2xOQbu7WkxBEUoojZi0ZQA";
+const tomtomAccessToken = "BcBXIT6iI7iGcl7VhKG5oQW0AJgkR5bn";
 
 function generateTomTomURL(waypoints) {
   const baseURL = "api.tomtom.com";
@@ -66,7 +75,6 @@ export const fetchDistanceAndTime = async (waypoints) => {
       traffic: "live",
     },
   };
-  console.log(JSON.stringify(payload));
   try {
     const response = await fetch(URL, {
       method: "POST",

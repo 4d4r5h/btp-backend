@@ -1,5 +1,5 @@
 import { fetchDistanceAndTime, fetchDistanceAndTimeMatrix } from "./fetch.mjs";
-import PriorityQueue from "priorityqueuejs";
+// import PriorityQueue from "priorityqueuejs";
 
 export default async function findOptimalPath(request) {
   async function getDistanceAndTime(point1, point2) {
@@ -36,7 +36,7 @@ export default async function findOptimalPath(request) {
             "The response does not contain the expected 'data' property.",
         };
       }
-      const distanceAndTimeMatrix = new Map();
+      let distanceAndTimeMatrix = new Map();
       for (let i = 0; i < origins.length; i++) {
         for (let j = 0; j < destinations.length; j++) {
           const index = i * destinations.length + j;
@@ -64,9 +64,7 @@ export default async function findOptimalPath(request) {
     chargingRate,
     chargingStations,
   } = request;
-  const priorityQueue = new PriorityQueue((a, b) => {
-    return b.totalTime - a.totalTime;
-  });
+  let priorityQueue = [];
   let distanceAndTimeMatrix = [];
 
   try {
@@ -81,7 +79,7 @@ export default async function findOptimalPath(request) {
     throw error;
   }
 
-  priorityQueue.enq({
+  priorityQueue.push({
     currentLocation: waypoints[0],
     indexOfNextTargetLocation: 1,
     totalTime: 0,
@@ -91,7 +89,11 @@ export default async function findOptimalPath(request) {
     time: [],
   });
 
-  while (priorityQueue.size() > 0) {
+  while (priorityQueue.length > 0) {
+    priorityQueue.sort((a, b) => {
+      return a.totalTime - b.totalTime;
+    });
+
     const {
       currentLocation,
       indexOfNextTargetLocation,
@@ -100,7 +102,7 @@ export default async function findOptimalPath(request) {
       path,
       stations,
       time,
-    } = priorityQueue.deq();
+    } = priorityQueue.shift();
 
     if (indexOfNextTargetLocation == waypoints.length) {
       return { path: path, stations: stations, time: time };
@@ -134,7 +136,7 @@ export default async function findOptimalPath(request) {
           const newStations = stations.concat(location);
           const newTime = time.concat(duration);
 
-          priorityQueue.enq({
+          priorityQueue.push({
             currentLocation: newCurrentLocation,
             indexOfNextTargetLocation: newIndexOfNextTargetLocation,
             totalTime: newTotalTime,
@@ -172,7 +174,7 @@ export default async function findOptimalPath(request) {
         const newStations = stations;
         const newTime = time;
 
-        priorityQueue.enq({
+        priorityQueue.push({
           currentLocation: newCurrentLocation,
           indexOfNextTargetLocation: newIndexOfNextTargetLocation,
           totalTime: newTotalTime,

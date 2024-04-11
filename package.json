@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --max-old-space-size=4096 server.mjs"
+    "dev": "nodemon server.mjs"
   },
   "type": "module",
   "author": "",

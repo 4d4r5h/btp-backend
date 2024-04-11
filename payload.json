@@ -1,0 +1,13 @@
+{
+    "waypoints": [
+        {
+            "latitude": 25.540789,
+            "longitude": 84.850905
+        },
+        {
+            "latitude": 25.58351898737865,
+            "longitude": 84.46072574704885
+        }
+    ],
+    "initialBatteryCharge": 9999
+}

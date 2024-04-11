@@ -26,9 +26,18 @@ async function fetchChargingStations() {
   }
 }
 
+function logMemoryUsage() {
+  const memoryUsage = process.memoryUsage();
+  console.log('Memory Usage:');
+  console.log(`- RSS: ${memoryUsage.rss} bytes`);
+  console.log(`- Heap Total: ${memoryUsage.heapTotal} bytes`);
+  console.log(`- Heap Used: ${memoryUsage.heapUsed} bytes`);
+  console.log(`- External: ${memoryUsage.external} bytes`);
+}
+
 router.post("/api", async (req, res) => {
-  console.log("Hello World")
   try {
+    logMemoryUsage();
     defaultValue.chargingStations.length = 0;
     await fetchChargingStations();
     const request = req.body;
@@ -66,7 +75,9 @@ router.post("/api", async (req, res) => {
     }
     request.chargingStations = defaultValue.chargingStations;
     const response = await routing(request);
-    res.status(200).json(response);
+    defaultValue.chargingStations.length = 0;
+    logMemoryUsage();
+    return res.status(200).json(response);
   } catch (error) {
     res.status(500).json({
       error: {
