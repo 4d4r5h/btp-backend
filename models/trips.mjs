@@ -51,10 +51,6 @@ const tripsSchema = new mongoose.Schema({
   },
 });
 
-tripsSchema.pre("save", function (next) {
-  next();
-});
-
 const Trips = mongoose.model("Trips", tripsSchema);
 
 export default Trips;

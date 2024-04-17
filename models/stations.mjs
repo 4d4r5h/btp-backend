@@ -26,10 +26,6 @@ const stationsSchema = new mongoose.Schema({
   },
 });
 
-stationsSchema.pre("save", function (next) {
-  next();
-});
-
 const Stations = mongoose.model("Stations", stationsSchema);
 
 export default Stations;
