@@ -1,45 +1,54 @@
 import { fetchTomTomJSON } from "./fetch.mjs";
 import findOptimalPath from "./find_optimal_path.mjs";
 
-export default function routing(request) {
-  return new Promise(async (resolve, reject) => {
-    async function getPath(waypoints) {
-      try {
-        const json = await fetchTomTomJSON(waypoints);
-        if (!json.hasOwnProperty("routes")) {
-          return [];
-        }
-        const legs = json.routes[0].legs;
-        const totalLengthInMeters = json.routes[0].summary.lengthInMeters;
-        const totalTravelTimeInSeconds = json.routes[0].summary.travelTimeInSeconds;
-        let path = [];
-        for (const leg of legs) {
-          path = path.concat(leg.points);
-        }
-        return [path, totalLengthInMeters, totalTravelTimeInSeconds];
-      } catch (error) {
-        reject(error);
-      }
-    }
-    let response = { path: [], stations: [], time: [] };
+export default async function routing(request) {
+  async function getPath(waypoints) {
     try {
-      const json = await findOptimalPath(request);
-      const waypoints = json.path;
-      const stations = json.stations;
-      const time = json.time;
-      if (waypoints.length >= 2) {
-        const array = await getPath(waypoints);
-        response.path = array[0];
-        if (response.path.length > 0) {
-          response.stations = stations;
-          response.time = time;
-          response.totalLengthInMeters = array[1];
-          response.totalTravelTimeInSeconds = array[2];
-        }
+      let json = await fetchTomTomJSON(waypoints);
+      if (!json.hasOwnProperty("routes")) {
+        json = null;
+        return [[], 0, 0];
       }
-      resolve(response);
+      const legs = json.routes[0].legs;
+      const totalLengthInMeters = json.routes[0].summary.lengthInMeters;
+      const totalTravelTimeInSeconds =
+        json.routes[0].summary.travelTimeInSeconds;
+      let path = [];
+      for (const leg of legs) {
+        path.push(...leg.points);
+      }
+      json = null;
+      return [path, totalLengthInMeters, totalTravelTimeInSeconds];
     } catch (error) {
-      reject(error);
+      throw error;
     }
-  });
+  }
+
+  try {
+    let json = await findOptimalPath(request);
+    const waypoints = json.path;
+    const stations = json.stations;
+    const time = json.time;
+    json = null;
+    if (waypoints.length >= 2) {
+      const [path, totalLengthInMeters, totalTravelTimeInSeconds] =
+        await getPath(waypoints);
+      if (path.length > 0) {
+        return {
+          path,
+          stations,
+          time,
+          totalLengthInMeters,
+          totalTravelTimeInSeconds,
+        };
+      }
+    }
+    return {
+      path: [],
+      stations: [],
+      time: [],
+    };
+  } catch (error) {
+    throw error;
+  }
 }
