@@ -7,18 +7,9 @@ import tripsRoute from "./routes/trips.mjs";
 
 const app = express();
 const port = process.env.PORT || 3000;
+
 const uri =
   "mongodb+srv://admin:4Jyf6qu4K50GvhvM@maincluster.2yx7xvt.mongodb.net/BTP?retryWrites=true&w=majority&appName=MainCluster";
-
-app.set("view engine", "ejs");
-
-app.use(express.json());
-app.use(express.static("public"));
-
-app.use("/", apiRoute);
-app.use("/", usersRoute);
-app.use("/", stationsRoute);
-app.use("/", tripsRoute);
 
 mongoose
   .connect(uri)
@@ -27,11 +18,36 @@ mongoose
   })
   .catch((error) => {
     console.log(`${error}`);
+    process.exit(1);
   });
+
+app.set("view engine", "ejs");
+app.use(express.json());
+app.use(express.static("public"));
+
+app.use("/", apiRoute);
+app.use("/", usersRoute);
+app.use("/", stationsRoute);
+app.use("/", tripsRoute);
 
 app.listen(port, () => {
   console.log(`Listening on port ${port}.`);
 });
+
+const handleShutdown = async () => {
+  console.log("Shutting down server...");
+  try {
+    await mongoose.connection.close();
+    console.log("MongoDB connection closed.");
+  } catch (error) {
+    console.error(`Error closing MongoDB connection: ${error.message}`);
+  } finally {
+    process.exit(0);
+  }
+};
+
+process.on("SIGINT", handleShutdown);
+process.on("SIGTERM", handleShutdown);
 
 // import express from "express";
 // import mongoose from "mongoose";
