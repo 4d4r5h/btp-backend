@@ -31,7 +31,7 @@ router.post("/add_stations", async (req, res) => {
     const existingStation = await Stations.findOne({
       "location.latitude": latitude,
       "location.longitude": longitude,
-    });
+    }).lean();
     if (existingStation) {
       return res.status(400).json({
         error: {
@@ -69,18 +69,16 @@ router.post("/add_stations", async (req, res) => {
 
 router.get("/show_stations", async (req, res) => {
   try {
-    const stations = await Stations.find();
-    let response = [];
-    for (const station of stations) {
-      response.push({
-        id: station._id,
-        label: station.label,
-        location: station.location,
-        reservedFrom: station.reservedFrom,
-        reservedTill: station.reservedTill,
-      });
-    }
+    const stations = await Stations.find().lean();
+    const response = stations.map((station) => ({
+      id: station._id,
+      label: station.label,
+      location: station.location,
+      reservedFrom: station.reservedFrom,
+      reservedTill: station.reservedTill,
+    }));
     res.status(200).json(response);
+    response.length = 0;
   } catch (error) {
     res.status(500).json({
       error: {
