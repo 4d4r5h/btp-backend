@@ -1,7 +1,8 @@
 import { fetchDistanceAndTime, fetchDistanceAndTimeMatrix } from "./fetch.mjs";
-// import PriorityQueue from "priorityqueuejs";
 
 export default async function findOptimalPath(request) {
+  let distanceAndTimeMatrix = new Map();
+
   async function getDistanceAndTime(point1, point2) {
     try {
       const key = JSON.stringify([point1, point2]);
@@ -20,13 +21,19 @@ export default async function findOptimalPath(request) {
       const distanceInKilometers = Math.round((distance / 1000) * 1000) / 1000;
       const time = json.data[0].routeSummary.travelTimeInSeconds;
       const timeinHours = Math.round((time / 3600) * 1000) / 1000;
-      return { distance: distanceInKilometers, time: timeinHours };
+      const value = { distance: distanceInKilometers, time: timeinHours };
+      distanceAndTimeMatrix.set(key, value);
+      return value;
     } catch (error) {
       throw error;
     }
   }
 
-  async function getDistanceAndTimeMatrix(origins, destinations) {
+  async function getDistanceAndTimeMatrix(
+    origins,
+    destinations,
+    distanceAndTimeMatrix
+  ) {
     try {
       const json = await fetchDistanceAndTimeMatrix(origins, destinations);
       if (!json.hasOwnProperty("data")) {
@@ -36,7 +43,6 @@ export default async function findOptimalPath(request) {
             "The response does not contain the expected 'data' property.",
         };
       }
-      let distanceAndTimeMatrix = new Map();
       for (let i = 0; i < origins.length; i++) {
         for (let j = 0; j < destinations.length; j++) {
           const index = i * destinations.length + j;
@@ -45,12 +51,11 @@ export default async function findOptimalPath(request) {
             Math.round((distance / 1000) * 1000) / 1000;
           const time = json.data[index].routeSummary.travelTimeInSeconds;
           const timeinHours = Math.round((time / 3600) * 1000) / 1000;
-          const key = [origins[i], destinations[j]];
+          const key = JSON.stringify([origins[i], destinations[j]]);
           const value = { distance: distanceInKilometers, time: timeinHours };
-          distanceAndTimeMatrix.set(JSON.stringify(key), value);
+          distanceAndTimeMatrix.set(key, value);
         }
       }
-      return distanceAndTimeMatrix;
     } catch (error) {
       throw error;
     }
@@ -65,15 +70,15 @@ export default async function findOptimalPath(request) {
     chargingStations,
   } = request;
   let priorityQueue = [];
-  let distanceAndTimeMatrix = [];
 
   try {
     const allWaypoints = waypoints.concat(
       chargingStations.map((chargingStation) => chargingStation.location)
     );
-    distanceAndTimeMatrix = await getDistanceAndTimeMatrix(
+    await getDistanceAndTimeMatrix(
       allWaypoints,
-      allWaypoints
+      allWaypoints,
+      distanceAndTimeMatrix
     );
   } catch (error) {
     throw error;
@@ -130,20 +135,15 @@ export default async function findOptimalPath(request) {
           newTotalTime += chargingTime;
           duration.endTime = newTotalTime;
           newCurrentBatteryCharge = fullBatteryChargeCapacity;
-          const newCurrentLocation = location;
-          const newPath = path.concat(newCurrentLocation);
-          const newIndexOfNextTargetLocation = indexOfNextTargetLocation;
-          const newStations = stations.concat(location);
-          const newTime = time.concat(duration);
 
           priorityQueue.push({
-            currentLocation: newCurrentLocation,
-            indexOfNextTargetLocation: newIndexOfNextTargetLocation,
+            currentLocation: location,
+            indexOfNextTargetLocation: indexOfNextTargetLocation,
             totalTime: newTotalTime,
             currentBatteryCharge: newCurrentBatteryCharge,
-            path: newPath,
-            stations: newStations,
-            time: newTime,
+            path: [...path, location],
+            stations: [...stations, location],
+            time: [...time, duration],
           });
         }
       } catch (error) {
@@ -157,9 +157,10 @@ export default async function findOptimalPath(request) {
     }
 
     try {
+      const newCurrentLocation = waypoints[indexOfNextTargetLocation];
       const json = await getDistanceAndTime(
         currentLocation,
-        waypoints[indexOfNextTargetLocation]
+        newCurrentLocation
       );
 
       const distance = json.distance;
@@ -168,20 +169,15 @@ export default async function findOptimalPath(request) {
       if (distance * dischargingRate < currentBatteryCharge) {
         const newCurrentBatteryCharge =
           currentBatteryCharge - distance * dischargingRate;
-        const newCurrentLocation = waypoints[indexOfNextTargetLocation];
-        const newPath = path.concat(newCurrentLocation);
-        const newIndexOfNextTargetLocation = indexOfNextTargetLocation + 1;
-        const newStations = stations;
-        const newTime = time;
 
         priorityQueue.push({
           currentLocation: newCurrentLocation,
-          indexOfNextTargetLocation: newIndexOfNextTargetLocation,
+          indexOfNextTargetLocation: indexOfNextTargetLocation + 1,
           totalTime: newTotalTime,
           currentBatteryCharge: newCurrentBatteryCharge,
-          path: newPath,
-          stations: newStations,
-          time: newTime,
+          path: [...path, newCurrentLocation],
+          stations: stations,
+          time: time,
         });
       }
     } catch (error) {
