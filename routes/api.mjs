@@ -4,23 +4,14 @@ import Stations from "../models/stations.mjs";
 
 const router = express.Router();
 
-let defaultValue = {
-  fullBatteryChargeCapacity: 1000000,
-  dischargingRate: 1000,
-  chargingRate: 1000000,
-  chargingStations: [],
-};
-
 async function fetchChargingStations() {
   try {
-    const chargingStations = await Stations.find();
-    for (const chargingStation of chargingStations) {
-      defaultValue.chargingStations.push({
-        location: chargingStation.location,
-        reservedFrom: chargingStation.reservedFrom,
-        reservedTill: chargingStation.reservedTill,
-      });
-    }
+    const chargingStations = await Stations.find().lean();
+    return chargingStations.map((chargingStation) => ({
+      location: chargingStation.location,
+      reservedFrom: chargingStation.reservedFrom,
+      reservedTill: chargingStation.reservedTill,
+    }));
   } catch (error) {
     throw error;
   }
@@ -28,9 +19,14 @@ async function fetchChargingStations() {
 
 router.post("/api", async (req, res) => {
   try {
-    defaultValue.chargingStations.length = 0;
-    await fetchChargingStations();
-    const request = req.body;
+    const defaultValue = {
+      fullBatteryChargeCapacity: 1000000,
+      dischargingRate: 1000,
+      chargingRate: 1000000,
+      chargingStations: [],
+    };
+    defaultValue.chargingStations = await fetchChargingStations();
+    let request = req.body;
     if (!request.hasOwnProperty("waypoints") || request.waypoints.length < 2) {
       return res.status(400).json({
         error: {
@@ -64,8 +60,10 @@ router.post("/api", async (req, res) => {
       request.chargingRate = defaultValue.chargingRate;
     }
     request.chargingStations = defaultValue.chargingStations;
-    const response = await routing(request);
-    return res.status(200).json(response);
+    let response = await routing(request);
+    res.status(200).json(response);
+    request = null;
+    response = null;
   } catch (error) {
     res.status(500).json({
       error: {
