@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 const tokens = [
   "rEtgPAC2uAWWms3IDgf0PVfNFb059s2R",
   "jkf8G4nkI5HAHsFkJAom3KtGONAyLeuU",
@@ -26,18 +24,13 @@ function generateTomTomURL(waypoints) {
   const versionNumber = 1;
   const contentType = "json";
   const API_KEY = tomtomAccessToken;
-  let routePlanningLocations = "";
 
-  for (const coordinate of waypoints) {
-    if (coordinate !== null) {
-      routePlanningLocations +=
-        coordinate.latitude + "," + coordinate.longitude + ":";
-    }
-  }
+  const routePlanningLocations = waypoints
+    .filter((coordinate) => coordinate !== null)
+    .map((coordinate) => `${coordinate.latitude},${coordinate.longitude}`)
+    .join(":");
 
-  let URL =
-    `https://${baseURL}/routing/${versionNumber}/calculateRoute/` +
-    `${routePlanningLocations}/${contentType}?key=${API_KEY}`;
+  const URL = `https://${baseURL}/routing/${versionNumber}/calculateRoute/${routePlanningLocations}/${contentType}?key=${API_KEY}`;
 
   return URL;
 }
@@ -60,16 +53,8 @@ export const fetchDistanceAndTime = async (waypoints) => {
     `Fetching Distance and Time between ${waypoints[0].latitude}, ${waypoints[0].longitude} and ${waypoints[1].latitude}, ${waypoints[1].longitude}.`
   );
   const payload = {
-    origins: [
-      {
-        point: waypoints[0],
-      },
-    ],
-    destinations: [
-      {
-        point: waypoints[1],
-      },
-    ],
+    origins: [{ point: waypoints[0] }],
+    destinations: [{ point: waypoints[1] }],
     options: {
       departAt: "now",
       traffic: "live",
@@ -92,26 +77,20 @@ export const fetchDistanceAndTime = async (waypoints) => {
 
 export const fetchDistanceAndTimeMatrix = async (origins, destinations) => {
   const URL = `https://api.tomtom.com/routing/matrix/2?key=${tomtomAccessToken}`;
-  const _origins = origins.map((point) => ({
-    point: {
-      latitude: point.latitude,
-      longitude: point.longitude,
-    },
-  }));
-  const _destinations = destinations.map((point) => ({
-    point: {
-      latitude: point.latitude,
-      longitude: point.longitude,
-    },
-  }));
+
   const payload = {
-    origins: _origins,
-    destinations: _destinations,
+    origins: origins.map((point) => ({
+      point: { latitude: point.latitude, longitude: point.longitude },
+    })),
+    destinations: destinations.map((point) => ({
+      point: { latitude: point.latitude, longitude: point.longitude },
+    })),
     options: {
       departAt: "now",
       traffic: "live",
     },
   };
+
   try {
     const response = await fetch(URL, {
       method: "POST",
