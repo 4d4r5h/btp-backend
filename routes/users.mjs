@@ -27,7 +27,7 @@ router.post("/signup", async (req, res) => {
         },
       });
     }
-    const userExists = await Users.findOne({ username });
+    const userExists = await Users.findOne({ username }).lean();
     if (userExists) {
       return res.status(400).json({
         error: {
@@ -68,7 +68,7 @@ router.post("/login", async (req, res) => {
     const user = await Users.findOne({
       username: username,
       isAdmin: isAdmin,
-    });
+    }).lean();
     if (!user) {
       return res.status(400).json({
         error: {
