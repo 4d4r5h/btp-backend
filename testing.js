@@ -21,7 +21,7 @@ const payload = {
 //     console.error("Error:", error);
 //   });
 
-const numUsers = 2;
+const numUsers = 3;
 const startTimeConcurrent = Date.now();
 const requests = [];
 
