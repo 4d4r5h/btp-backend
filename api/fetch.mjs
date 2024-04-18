@@ -1,24 +1,29 @@
+import { Mutex } from "async-mutex";
+
 class TokenManager {
   constructor(tokens, maxUsage) {
     this.tokens = tokens;
     this.maxUsage = maxUsage;
     this.usageCounts = Array(tokens.length).fill(0);
     this.currentIndex = 0;
+    this.mutex = new Mutex();
   }
 
-  getCurrentToken() {
-    while (
-      this.currentIndex < this.tokens.length &&
-      this.usageCounts[this.currentIndex] >= this.maxUsage
-    ) {
-      this.currentIndex = this.currentIndex + 1;
-    }
-    if (this.currentIndex == this.tokens.length) {
-      this.usageCounts.fill(0);
-      this.currentIndex = 0;
-    }
-    this.usageCounts[this.currentIndex] += 1;
-    return this.tokens[this.currentIndex];
+  async getCurrentToken() {
+    return await this.mutex.runExclusive(async () => {
+      while (
+        this.currentIndex < this.tokens.length &&
+        this.usageCounts[this.currentIndex] >= this.maxUsage
+      ) {
+        this.currentIndex = this.currentIndex + 1;
+      }
+      if (this.currentIndex == this.tokens.length) {
+        this.usageCounts.fill(0);
+        this.currentIndex = 0;
+      }
+      this.usageCounts[this.currentIndex] += 1;
+      return this.tokens[this.currentIndex];
+    });
   }
 }
 
@@ -73,7 +78,8 @@ export const fetchTomTomJSON = async (waypoints) => {
 };
 
 export const fetchDistanceAndTime = async (waypoints) => {
-  const URL = `https://api.tomtom.com/routing/matrix/2?key=${tokenManager.getCurrentToken()}`;
+  const token = await tokenManager.getCurrentToken();
+  const URL = `https://api.tomtom.com/routing/matrix/2?key=${token}`;
   console.log(
     `Fetching Distance and Time between ${waypoints[0].latitude}, ${waypoints[0].longitude} and ${waypoints[1].latitude}, ${waypoints[1].longitude}.`
   );
@@ -101,7 +107,8 @@ export const fetchDistanceAndTime = async (waypoints) => {
 };
 
 export const fetchDistanceAndTimeMatrix = async (origins, destinations) => {
-  const URL = `https://api.tomtom.com/routing/matrix/2?key=${tokenManager.getCurrentToken()}`;
+  const token = await tokenManager.getCurrentToken();
+  const URL = `https://api.tomtom.com/routing/matrix/2?key=${token}`;
   console.log(URL);
   const payload = {
     origins: origins.map((point) => ({
