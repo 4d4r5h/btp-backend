@@ -1,4 +1,5 @@
 import { fetchDistanceAndTime, fetchDistanceAndTimeMatrix } from "./fetch.mjs";
+import PriorityQueue from "priorityqueuejs";
 
 export default async function findOptimalPath(request) {
   let distanceAndTimeMatrix = new Map();
@@ -69,7 +70,9 @@ export default async function findOptimalPath(request) {
     chargingRate,
     chargingStations,
   } = request;
-  let priorityQueue = [];
+  const priorityQueue = new PriorityQueue((a, b) => {
+    return b.totalTime - a.totalTime;
+  });
 
   try {
     const allWaypoints = waypoints.concat(
@@ -84,7 +87,7 @@ export default async function findOptimalPath(request) {
     throw error;
   }
 
-  priorityQueue.push({
+  priorityQueue.enq({
     currentLocation: waypoints[0],
     indexOfNextTargetLocation: 1,
     totalTime: 0,
@@ -94,11 +97,7 @@ export default async function findOptimalPath(request) {
     time: [],
   });
 
-  while (priorityQueue.length > 0) {
-    priorityQueue.sort((a, b) => {
-      return a.totalTime - b.totalTime;
-    });
-
+  while (priorityQueue.size() > 0) {
     const {
       currentLocation,
       indexOfNextTargetLocation,
@@ -107,7 +106,7 @@ export default async function findOptimalPath(request) {
       path,
       stations,
       time,
-    } = priorityQueue.shift();
+    } = priorityQueue.deq();
 
     if (indexOfNextTargetLocation == waypoints.length) {
       return { path: path, stations: stations, time: time };
@@ -136,7 +135,7 @@ export default async function findOptimalPath(request) {
           duration.endTime = newTotalTime;
           newCurrentBatteryCharge = fullBatteryChargeCapacity;
 
-          priorityQueue.push({
+          priorityQueue.enq({
             currentLocation: location,
             indexOfNextTargetLocation: indexOfNextTargetLocation,
             totalTime: newTotalTime,
@@ -170,7 +169,7 @@ export default async function findOptimalPath(request) {
         const newCurrentBatteryCharge =
           currentBatteryCharge - distance * dischargingRate;
 
-        priorityQueue.push({
+        priorityQueue.enq({
           currentLocation: newCurrentLocation,
           indexOfNextTargetLocation: indexOfNextTargetLocation + 1,
           totalTime: newTotalTime,
