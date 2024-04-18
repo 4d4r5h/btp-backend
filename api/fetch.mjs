@@ -1,3 +1,27 @@
+class TokenManager {
+  constructor(tokens, maxUsage) {
+    this.tokens = tokens;
+    this.maxUsage = maxUsage;
+    this.usageCounts = Array(tokens.length).fill(0);
+    this.currentIndex = 0;
+  }
+
+  getCurrentToken() {
+    while (
+      this.currentIndex < this.tokens.length &&
+      this.usageCounts[this.currentIndex] >= this.maxUsage
+    ) {
+      this.currentIndex = this.currentIndex + 1;
+    }
+    if (this.currentIndex == this.tokens.length) {
+      this.usageCounts.fill(0);
+      this.currentIndex = 0;
+    }
+    this.usageCounts[this.currentIndex] += 1;
+    return this.tokens[this.currentIndex];
+  }
+}
+
 const tokens = [
   "rEtgPAC2uAWWms3IDgf0PVfNFb059s2R",
   "jkf8G4nkI5HAHsFkJAom3KtGONAyLeuU",
@@ -14,10 +38,11 @@ const tokens = [
   "x3eEC5jGIc6YacX91bGpcA72xVquZX7V",
   "KtCoevkTV3HhwPARccC7v5AVQtOIQAyc",
   "bOnv6OAzFU4hnChRl6oFlAJVVSfaGg5A",
-  "DlAiWnq2AbXQZ1jvOohJbj4kHD1tFzee",
 ];
+const maxUsage = 2;
+const tomtomAccessToken = "DlAiWnq2AbXQZ1jvOohJbj4kHD1tFzee";
 
-const tomtomAccessToken = "BcBXIT6iI7iGcl7VhKG5oQW0AJgkR5bn";
+const tokenManager = new TokenManager(tokens, maxUsage);
 
 function generateTomTomURL(waypoints) {
   const baseURL = "api.tomtom.com";
@@ -48,7 +73,7 @@ export const fetchTomTomJSON = async (waypoints) => {
 };
 
 export const fetchDistanceAndTime = async (waypoints) => {
-  const URL = `https://api.tomtom.com/routing/matrix/2?key=${tomtomAccessToken}`;
+  const URL = `https://api.tomtom.com/routing/matrix/2?key=${tokenManager.getCurrentToken()}`;
   console.log(
     `Fetching Distance and Time between ${waypoints[0].latitude}, ${waypoints[0].longitude} and ${waypoints[1].latitude}, ${waypoints[1].longitude}.`
   );
@@ -76,8 +101,8 @@ export const fetchDistanceAndTime = async (waypoints) => {
 };
 
 export const fetchDistanceAndTimeMatrix = async (origins, destinations) => {
-  const URL = `https://api.tomtom.com/routing/matrix/2?key=${tomtomAccessToken}`;
-
+  const URL = `https://api.tomtom.com/routing/matrix/2?key=${tokenManager.getCurrentToken()}`;
+  console.log(URL);
   const payload = {
     origins: origins.map((point) => ({
       point: { latitude: point.latitude, longitude: point.longitude },
