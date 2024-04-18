@@ -37,7 +37,7 @@ router.post("/start_trip", async (req, res) => {
         },
       });
     }
-    const user = await Users.findOne({ username });
+    const user = await Users.findOne({ username }).lean();
     if (!user) {
       return res.status(400).json({
         error: {
@@ -61,7 +61,7 @@ router.post("/start_trip", async (req, res) => {
       const station = await Stations.findOne({
         "location.latitude": latitude,
         "location.longitude": longitude,
-      });
+      }).lean();
       if (!station) {
         return res.status(400).json({
           error: {
@@ -82,14 +82,13 @@ router.post("/start_trip", async (req, res) => {
       station.reservedFrom = currentDate;
       await station.save();
     }
-    const request = {
+    const trip = new Trips({
       username: username,
       startLocation: startLocation,
       endLocation: endLocation,
       chargingStations: chargingStations,
       startTime: currentDate,
-    };
-    const trip = new Trips(request);
+    });
     await trip.save();
     const response = {
       id: trip._id,
@@ -135,14 +134,14 @@ router.post("/end_trip", async (req, res) => {
     const currentDate = new Date();
     const chargingStations = trip.chargingStations;
     for (const chargingStation of chargingStations) {
-      const latitude = chargingStation.latitude;
-      const longitude = chargingStation.longitude;
       const station = await Stations.findOne({
-        "location.latitude": latitude,
-        "location.longitude": longitude,
+        "location.latitude": chargingStation.latitude,
+        "location.longitude": chargingStation.longitude,
       });
-      station.reservedFrom = null;
-      await station.save();
+      if (station) {
+        station.reservedFrom = null;
+        await station.save();
+      }
     }
     trip.endTime = currentDate;
     trip.isCompleted = true;
@@ -171,21 +170,19 @@ router.post("/end_trip", async (req, res) => {
 
 router.get("/show_trips", async (req, res) => {
   try {
-    const trips = await Trips.find();
-    let response = [];
-    for (const trip of trips) {
-      response.push({
-        id: trip._id,
-        username: trip.username,
-        startLocation: trip.startLocation,
-        endLocation: trip.endLocation,
-        chargingStations: trip.chargingStations,
-        startTime: trip.startTime,
-        endTime: trip.endTime,
-        isCompleted: trip.isCompleted,
-      });
-    }
+    const trips = await Trips.find().lean();
+    const response = trips.map((trip) => ({
+      id: trip._id,
+      username: trip.username,
+      startLocation: trip.startLocation,
+      endLocation: trip.endLocation,
+      chargingStations: trip.chargingStations,
+      startTime: trip.startTime,
+      endTime: trip.endTime,
+      isCompleted: trip.isCompleted,
+    }));
     res.status(200).json(response);
+    response.length = 0;
   } catch (error) {
     res.status(500).json({
       error: {
