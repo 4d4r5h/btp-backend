@@ -68,7 +68,7 @@ router.post("/login", async (req, res) => {
     const user = await Users.findOne({
       username: username,
       isAdmin: isAdmin,
-    }).lean();
+    });
     if (!user) {
       return res.status(400).json({
         error: {
