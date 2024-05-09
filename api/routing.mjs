@@ -1,6 +1,6 @@
 import { fetchTomTomJSON } from "./fetch.mjs";
-// import findOptimalPath from "./find_optimal_path.mjs";
-import findOptimalPath from "./brute/fourth_method.mjs";
+import findOptimalPath from "./find_optimal_path.mjs";
+// import findOptimalPath from "./brute/fourth_method.mjs";
 
 export default async function routing(request) {
   async function getPath(waypoints) {
